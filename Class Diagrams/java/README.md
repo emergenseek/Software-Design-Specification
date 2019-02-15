@@ -1,0 +1,1 @@
+Note: Classes with methods do not have method bodies and do not implement the classes that they `implement`. This is not compilable Java code. These .java files should only be used to assist in class diagram creation.
