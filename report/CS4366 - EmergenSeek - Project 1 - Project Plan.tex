@@ -2,8 +2,9 @@
 \usepackage[top=0.6in,bottom=1.0in,left=1.0in,right=1.0in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
-\fontfamily{times}
 \usepackage{graphicx,float,tikz}
+\usepackage{listings}
+\fontfamily{times}
 
 \title{\large CS 4366: Senior Capstone Project \\ Dr. Sunho Lim \\ Project \#3 - Software Design Specification - Project Report \\ EmergenSeek}
 \author{Suhas Bacchu \ Derek Fritz \ Kevon Manahan \ Annie Vo \ Simon Woldemichael}
@@ -27,21 +28,66 @@ In this report, we describe and detail the layout and design of EmergenSeek. The
 \section{Client Analysis}
 \par ~ In this section, we will enumerate the various modules and components responsible for keeping the frontend functional.
 
+
+%%% MOBILE SCREENSHOTS
+\begin{figure}[!htb]
+\minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth]{demo_home.png}
+  \caption{Screenshot of the mobile client's home page.}\label{fig:mobile1}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth]{demo_navmenu.png}
+  \caption{Screenshot of the mobile client's navigation menu.}\label{fig:mobile2}
+\endminipage\hfill
+\minipage{0.32\textwidth}%
+  \includegraphics[width=\linewidth]{demo_placeholderpage.png}
+  \caption{A screenshot of a placeholder page on the mobile client.}\label{fig:mobile3}
+\endminipage
+\end{figure}
+%%% END MOBILE SCREENSHOTS
+
 \section{Backend Analysis}
-\par ~ In this section, we will enumerate the various modules, components, and objects responsible for keeping the backend functional. It should be noted that there is no literal \texttt{class} instance within the Go programming language, but objects may still be enumerated through the \texttt{struct} qualifier. Class attributes are defined as \texttt{struct} fields.
+\par ~ In this section, we will enumerate the various modules, components, and objects responsible for keeping the backend functional. It should be noted that there is no literal \texttt{class} instance within the Go programming language, but objects may still be enumerated through the \texttt{struct} qualifier. Class attributes are defined as \texttt{struct} fields. Additionally, the backend will follow a decoupled, microservices architecture. Each of these microservices will be defined as a singular, AWS Lambda function which will serve a single purpose.
 
 \subsection{Models}
-\par ~ The models of this application contain Go structures which replicate 
+\par ~ The models of this application contain Go structures will replicate those defined in the UML Class Diagrams. The functions defined within those models are represented in Go as methods on the \texttt{struct}. For example:
+
+
+\begin{figure}[!h]
+	\begin{center}
+	\begin{lstlisting}
+	type LocationPoller struct {
+		// The location to be used for the current poll
+		Location  []float32 `json:"location"`
+		
+		// The user to be used for the current LocationPoller instance
+		User      *User     `json:"user"`
+		
+		// How often the location should be polled	
+		Frequency int       `json:"frequency"`
+	}
+
+	func (*c LocationPoller) DoSevere() error {
+		// Method logic here	
+	}
+	\end{lstlisting}
+	\end{center}
+\caption{The code listing above describes how, in Go, a struct is associated with its methods. The method is a pointer receiver on the struct that it is related to. This is similar to how a \texttt{class}, in a language such as Java, has \texttt{class methods}}.
+\end{figure}
 
 \subsection{Subsystems}
-\par ~ The backend of the application will utilize AWS Lambda, a serverless, Functions-as-a-Service offering to run our Go code, DynamoDB to store user data and information, the Twilio API to provide the system with programmable SMS and voice communications, and Google's Geocoding and Maps APIs to better define the location of users and various emergency services. The subsystems of the application are divided up into single-responsibility, service-oriented architecture. This means that the backend consists of several Lambda functions and each function is responsible for only one thing. In total, at the time of this report, there are \emph{six} Lambda functions. Here is a breakdown of their functionality. Functions are prefixed with \texttt{ES} and suffixed with a meaningful name which explains their role.
+\par ~ The backend of the application will utilize AWS Lambda, a serverless, Functions-as-a-Service offering to run our Go code, DynamoDB to store user data and information, the Twilio API to provide the system with programmable SMS and voice communications, and Google's Geocoding and Maps APIs to better define the location of users and various emergency services. The subsystems of the application are divided up into single-responsibility, service-oriented architecture. This means that the backend consists of several Lambda functions and each function is responsible for only one thing. In total, at the time of this report, there are \emph{six} Lambda functions. The break down of their functionality and responsibilities are enumerated using a brief description, followed by any additional dependencies that they may have. These dependencies include any external APIs, datastores, or databases. Functions are prefixed with \texttt{ES} and suffixed with a meaningful name which explains their role.
 
-\subsubsection{Lambda Function 1}
-\subsubsection{Lambda Function 2}
-\subsubsection{Lambda Function 3}
-\subsubsection{Lambda Function 4}
-\subsubsection{Lambda Function 5}
-\subsubsection{Lambda Function 6}
+\subsubsection{Lambda Function - ESUpdateContactPermissions}
+\begin{enumerate}
+	\item[1.] Function: 
+	\item[2.] Dependencies: 
+\end{enumerate}
+\subsubsection{Lambda Function - ESSendEmergencySMSMessage }
+\subsubsection{Lambda Function - ESGetLockscreenInfo }
+\subsubsection{Lambda Function - ESCreateUser }
+\subsubsection{Lambda Function - ESSendEmergencyVoiceCall }
+\subsubsection{Lambda Function - ESPollLocation }
 
 \begin{figure}[H]
 \begin{center}
@@ -49,7 +95,7 @@ In this report, we describe and detail the layout and design of EmergenSeek. The
 	\includegraphics[scale=.15]{EmergenSeek-Backend.PNG}
 }
 \caption{Cloudcraft \cite{one} diagram of the AWS resources and external APIs necessary for the backend.}
-\label{fig:1}	
+\label{fig:1}
 \end{center}	
 \end{figure}
 	
