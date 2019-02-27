@@ -33,14 +33,35 @@ As a reminder, EmergenSeek is a mobile application which will provide users with
 
 \par ~ On every \texttt{git push} event (from a developers local machine to GitHub), CodeStar will begin a build sequence; this is where CodeBuild comes into play. CodeBuild will read a YAML specification \cite{two}, and per that specification, build our project. For our backend repository, the respective Go commands, will be invoked. This involves building all of our Lambda functions into statically linked binaries, testing them using our own custom unit tests, and preparing the static binaries for deployment by compressing them. Similarly, for the frontend, the respective Flutter commands will be invoked. This, again, involves unit and widget testing \cite{three} and building the Dart code into both an Android APK \cite{four} for distribution on the Google Play store and an iOS IPA for distribution on the Apple \footnote{Because distribution of apps to Apple's iOS App Store requires a developer partnership, which requires the payment of a fee, deployment of the iOS application is outside of the scope of this class} iOS App Store .
 
-\par ~ Next, after the code has been tested and static binaries of both our Lambda functions and mobile clients have been built, they are deployed using both CodeDeploy and CodePipeline. CodeDeploy, intuitively, deploys our backend to Lambda (with API Gateway) and our mobile clients to their respective application stores (Google Play or Apple App). CodePipeline defines how they are deployed. The \emph{how} of the pipeline entails, more-so for the backend, what percentage of our newly deployed code should be accessed. CodePipeline is mainly used for defining different deployment stages (i.e. production, staging, or testing) and supports deployment patterns such as Canary or Blue/Green. 
+\par ~ Next, after the code has been tested and static binaries of both our Lambda functions and mobile clients have been built, they are deployed using both CodeDeploy and CodePipeline. CodeDeploy, intuitively, deploys our backend to Lambda (with API Gateway) and our mobile clients to their respective application stores (Google Play or Apple App). CodePipeline defines how they are deployed. The \emph{how} of the pipeline entails, more-so for the backend, what percentage of our newly deployed code should be accessed. CodePipeline is mainly used for defining different deployment stages (i.e. production, staging, or testing) and supports deployment patterns such as Canary or Blue/Green. Backing these services is an additional AWS service known as CloudFormation. CloudFormation provisions the necessary AWS resources, resource parameters, and their security policies, based on the contents of a second YAML definition.
+
+\par ~ Lastly, on the backend side of things, because pushing our code and waiting for the entire deployment process before we can test our API is not a timely means of development, we will utilize Docker and Amazon's Serverless Application Model (SAM) \cite{five} to test on our local machines. Docker will replicate a Lambda environment within a local Docker machine (a Linux-based virtual machine running on a hypervisor), 
 
 \section{Design Documentation}
 \par ~ In this section, we will discuss the various details of our design documents. In each subsection below, diagrams are displayed and followed by a brief description of each of the components within the associated diagram.
 
 \subsection{UML Class Diagram}
+In this subsection, we will display and briefly explain class diagrams relevant to our application.
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=1]{diagrams/backend-class.png}
+  }  
+  \caption{Class diagram for the backend.}
+\end{figure}
 
-\subsection{UML Use-case Diagram}
+\begin{enumerate}
+\item[1.] Address --- Encapsulates the data necessary for representing an address.
+\item[2.] User --- Encapsulates the data necessary for representing a user. Has 1 method which retrieves the user's information using a Lambda function for display on the lock screen.
+\item[3.] Contact --- Encapsulates the data necessary for representing a user's contact. Has 2 methods which get and update the contact on the emergency services map so that the user may see which of their contacts are nearby.
+\item[4.] ServiceLocator --- Encapsulates the data necessary for performing location based functions. Has two methods which will get and update emergency service locations for the map on the client.
+\item[5] LocationFunctions --- (Interface) This interface contains the polymorphic methods necessary for performing location related functions. This interface is implemented by the LocationPoller instance.
+\item[6.] SOSFunctions --- (Interface) This interface contains the polymorphic methods necessary for providing functionality to the S.O.S. button. This interface is implmeneted by the SOS instance.
+\item[7.] LocationPoller --- Encapsulates the data necessary for providing functionality to the location polling feature. This instance implements the LocationFunctions interface.
+\item[8.] SOS --- Encapsulates the data necessary for defining the SOS buttons functionality. This instance inherits the LocationPoller instance and implements the SOSFunctions interface. It should be noted that while the \texttt{emailMessage} attribute does exist, for the scope of this class, we will focus on SMS and voice.
+\end{enumerate}
+
+\subsection{UML Use Case Diagram}
+In this subsection, we will display and briefly explain use case diagrams relevant to our application.
 \begin{figure}[H]
   \centerline{
   	\includegraphics[scale=.8]{diagrams/use-case.png}
@@ -70,30 +91,32 @@ In this subsection, we will display and briefly explain sequence diagrams releva
   \centerline{
   	\includegraphics[scale=0.8]{diagrams/sequence-1.png}
   }  
-  \caption{In this sequence diagram,}
+  \caption{In this sequence diagram, we describe the interactions involved for performing a safety check. Activating the safety check-in feature will send an instant location-based update. This feature will request location polling from the backend. The client will receive confirmation of the update.}
 \end{figure}
 
 \begin{figure}[H]
   \centerline{
   	\includegraphics[scale=0.8]{diagrams/sequence-2.png}
   }  
-  \caption{In this sequence diagram,}
+  \caption{In this sequence diagram, we describe the interactions involved for using the service locator. Default search criteria will be used upon opening locator. Search request will be routed to backend and set to the API. Response info is then routed back to the client.}
 \end{figure}
 
 \begin{figure}[H]
   \centerline{
-  	\includegraphics[scale=0.8]{diagrams/sequence-2.png}
+  	\includegraphics[scale=0.8]{diagrams/sequence-3.png}
   }  
-  \caption{In this sequence diagram,}
+  \caption{In this sequence diagram, we describe the interactions involved for signing a user in. User sign-in process handled via Firebase authentication. The result of Firebase request is returned to the client.}
 \end{figure}
 
-\begin{figure}[H]
-  \centerline{
-  	\includegraphics[scale=0.6]{diagrams/sequence-4a.png}
-  	\includegraphics[scale=0.6]{diagrams/sequence-4b.png}
-  }  
-  \caption{In these sequence diagrams,}
-\end{figure}
+%
+%\begin{figure}[H]
+%  \centerline{
+%  	\includegraphics[scale=0.6]{diagrams/sequence-4a.png}
+%  	\includegraphics[scale=0.6]{diagrams/sequence-4b.png}
+%  }  
+%  \caption{In these sequence diagrams,}
+%\end{figure}
+%
 
 \begin{figure}[H]
   \centerline{
@@ -102,9 +125,9 @@ In this subsection, we will display and briefly explain sequence diagrams releva
   } 
   \centerline{
   	\includegraphics[scale=0.6]{diagrams/sequence-5c.png}
-  	\includegraphics[scale=0.6]{diagrams/sequence-5d.png}
+  	\includegraphics[scale=0.7]{diagrams/sequence-5d.png}
    } 
-  \caption{In these sequence diagrams,}
+  \caption{In these sequence diagrams, we enumerate the different possibilities for the user interacting with the S.O.S. button. \emph{Top left}: False S.O.S. activation is countered by monitoring for a 3 second press-and-hold. If user fails to carry out the activation, the S.O.S. button will return to its inactive state. \emph{Top right}: After activating the S.O.S. button, a selection + confirmation prompt will appear. Here, users may opt to cancel the S.O.S. alert. \emph{Bottom left}: S.O.S. alert will default to severe if user is unable to confirm. This function involves the inclusion of the following functions getContacts(), getLocation(), sendSMS(), sendVoiceCall(), displayInfo(). \emph{Bottom Right}: Activating the safety check-in feature will send an instant location-based update. The client will receiv confirmation of the update. This option is simply for users to notify their contacts in a non-emergency event.}
 \end{figure}
 
 \section{Client Analysis - Mockups}
@@ -168,16 +191,16 @@ In this subsection, we will display and briefly explain sequence diagrams releva
 	}
 	\end{lstlisting}
 	\end{center}
-\caption{The code listing above describes how, in Go, a struct is associated with its methods. The method is a pointer receiver on the struct that it is related to. This is similar to how a \texttt{class}, in a language such as Java, has \texttt{class methods}}.
+\caption{The code listing above describes how, in Go, a struct is associated with its methods. The method is a pointer receiver on the struct that it is related to. This is similar to how a \texttt{class}, in a language such as Java, has \texttt{class methods}.}
 \end{figure}
 
 \subsection{Subsystems}
 \par ~ The backend of the application will be comprised of the following. For brevity, each is lambed with a tier:
 \begin{enumerate}
-	\item[1.] Application Tier - AWS Lambda, a serverless, Functions-as-a-Service offering to run our Go code and AWS API Gateway
-	\item[2.] Database Tier - DynamoDB to store user data and information
-	\item[3.] Notification Tier - The Twilio API to provide the system with programmable SMS and voice communications
-	\item[4.] Location Tier - Google's Geocoding and Maps APIs to better define the location of users and various emergency services
+	\item[1.] Application Tier - AWS Lambda, a serverless, Functions-as-a-Service offering to run our Go code and AWS API Gateway.
+	\item[2.] Database Tier - DynamoDB to store user data and information.
+	\item[3.] Notification Tier - The Twilio API to provide the system with programmable SMS and voice communications.
+	\item[4.] Location Tier - Google's Geocoding and Maps APIs to better define the location of users and various emergency services.
 \end{enumerate}
 
 The subsystems of the application are divided up into single-responsibility, service-oriented architecture. This means that the backend consists of several Lambda functions and each function is responsible for only one thing. In total, at the time of this report, there are \emph{six} Lambda functions. The break down of their functionality and responsibilities are enumerated using a brief description, followed by any additional dependencies that they may have. These dependencies include any external APIs, datastores, or databases. Functions are prefixed with \texttt{ES} and suffixed with a meaningful name which explains their role.
@@ -234,6 +257,8 @@ Build Specification Reference for AWS CodeBuild ~ \url{https://docs.aws.amazon.c
 Testing Flutter apps ~ \url{https://flutter.dev/docs/testing}
 \bibitem{four}
 Automating Publishing to the Play Store ~ \url{https://github.com/codepath/android_guides/wiki/Automating-Publishing-to-the-Play-Store}
+\bibitem{five}
+What is the AWS Serverless Application Model (AWS SAM)? ~ \url{https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html}
 \end{thebibliography}
 \end{document}
 
