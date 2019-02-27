@@ -15,7 +15,7 @@
 \maketitle
 \vspace{-1cm}
 \begin{abstract}
-In this report, we describe and detail the layout and design of EmergenSeek. The structure of the system, at a high-level, consists of two components; a mobile client, developed using a Dart-based, cross-platform mobile framework called Flutter, and a backend API, developed using Amazon Web Services, Google's Firebase platform, and the Go programming language. Each of these components is also broken down into their own modules and components. Respective design documentation, including UML class, use case, and sequence diagrams, are included as well.
+In this report, we describe and detail the layout and design of EmergenSeek. The structure of the system, at a high-level, consists of two components; a mobile client, developed using a Dart-based, cross-platform mobile framework called Flutter, and a backend Application Programming Interface (API), developed using Amazon Web Services, Google's Firebase platform, and the Go programming language. Each of these components is also broken down into their own modules and components. Respective design documentation, including UML class, use case, and sequence diagrams, are included as well.
 \end{abstract}
 
 \section{Project Restatement}
@@ -35,16 +35,19 @@ As a reminder, EmergenSeek is a mobile application which will provide users with
 
 \par ~ Next, after the code has been tested and static binaries of both our Lambda functions and mobile clients have been built, they are deployed using both CodeDeploy and CodePipeline. CodeDeploy, intuitively, deploys our backend to Lambda (with API Gateway) and our mobile clients to their respective application stores (Google Play or Apple App). CodePipeline defines how they are deployed. The \emph{how} of the pipeline entails, more-so for the backend, what percentage of our newly deployed code should be accessed. CodePipeline is mainly used for defining different deployment stages (i.e. production, staging, or testing) and supports deployment patterns such as Canary or Blue/Green. Backing these services is an additional AWS service known as CloudFormation. CloudFormation provisions the necessary AWS resources, resource parameters, and their security policies, based on the contents of a second YAML definition.
 
-\par ~ Lastly, on the backend side of things, because pushing our code and waiting for the entire deployment process before we can test our API is not a timely means of development, we will utilize Docker and Amazon's Serverless Application Model (SAM) \cite{five} to test on our local machines. Docker will replicate a Lambda environment within a local Docker machine (a Linux-based virtual machine running on a hypervisor), 
+\par ~ Lastly, on the backend side of things, because pushing our code and waiting for the entire deployment process before we can test our API is not a timely means of development, we will utilize Docker and Amazon's Serverless Application Model (SAM) \cite{five} to test on our local machines. Docker will replicate a Lambda environment within a local Docker machine (a Linux-based virtual machine running on a hypervisor) and allow us to invoke the function using a \texttt{localhost} endpoint.
+
+\newpage
 
 \section{Design Documentation}
 \par ~ In this section, we will discuss the various details of our design documents. In each subsection below, diagrams are displayed and followed by a brief description of each of the components within the associated diagram.
 
 \subsection{UML Class Diagram}
 In this subsection, we will display and briefly explain class diagrams relevant to our application.
+\subsubsection{Backend}
 \begin{figure}[H]
   \centerline{
-  	\includegraphics[scale=1]{diagrams/backend-class.png}
+  	\includegraphics[scale=1.3]{diagrams/backend-class.png}
   }  
   \caption{Class diagram for the backend.}
 \end{figure}
@@ -59,6 +62,15 @@ In this subsection, we will display and briefly explain class diagrams relevant 
 \item[7.] LocationPoller --- Encapsulates the data necessary for providing functionality to the location polling feature. This instance implements the LocationFunctions interface.
 \item[8.] SOS --- Encapsulates the data necessary for defining the SOS buttons functionality. This instance inherits the LocationPoller instance and implements the SOSFunctions interface. It should be noted that while the \texttt{emailMessage} attribute does exist, for the scope of this class, we will focus on SMS and voice.
 \end{enumerate}
+
+\subsubsection{Frontend}
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=1.3]{diagrams/client-class-1.png}
+  }  
+  \caption{Full client class diagram for the Flutter code base. The top half defines a group of stateless widgets and the botom half defines a group fo stateful widgets. The largest difference between the two is, stateful widgets are responsible for dynamically changing based on the current \emph{state} of the application. For example, when the user logs in, the application should contain all of the user's information without having to prompt the user for that information repeatedly. In Flutter, all user interface components are widgets. Widgets are either stateful or stateless. NUniversal components such as NavMenu and Settings act as widgets within others. This can be related to component inheritance. Notice The \texttt{build} method in every components defines how the component is rendered, what data it is responsible for encapsulating, and the logic necessary for invoking interactions with the backend API.}
+\end{figure}
+
 
 \subsection{UML Use Case Diagram}
 In this subsection, we will display and briefly explain use case diagrams relevant to our application.
@@ -130,7 +142,9 @@ In this subsection, we will display and briefly explain sequence diagrams releva
   \caption{In these sequence diagrams, we enumerate the different possibilities for the user interacting with the S.O.S. button. \emph{Top left}: False S.O.S. activation is countered by monitoring for a 3 second press-and-hold. If user fails to carry out the activation, the S.O.S. button will return to its inactive state. \emph{Top right}: After activating the S.O.S. button, a selection + confirmation prompt will appear. Here, users may opt to cancel the S.O.S. alert. \emph{Bottom left}: S.O.S. alert will default to severe if user is unable to confirm. This function involves the inclusion of the following functions getContacts(), getLocation(), sendSMS(), sendVoiceCall(), displayInfo(). \emph{Bottom Right}: Activating the safety check-in feature will send an instant location-based update. The client will receiv confirmation of the update. This option is simply for users to notify their contacts in a non-emergency event.}
 \end{figure}
 
-\section{Client Analysis - Mockups}
+\newpage
+
+\section{Client Mockups}
 \par ~ In this section, we will enumerate some low and high fidelity mockups for the frontend.
 
 
@@ -156,6 +170,7 @@ In this subsection, we will display and briefly explain sequence diagrams releva
   \caption{Low-fidelity, mockups of the mobile client's planned service locator, location update, S.O.S. alert and S.O.S. confirmation views. Each of these views would have their own respective widgets as defined in }
 \end{figure}
 
+\newpage
 
 \section{Backend Analysis}
 \par ~ In this section, we will enumerate the various modules, components, and objects responsible for keeping the backend functional. It should be noted that there is no literal \texttt{class} instance within the Go programming language, but objects may still be enumerated through the \texttt{struct} qualifier. Class attributes are defined as \texttt{struct} fields. Additionally, the backend will follow a decoupled, microservices architecture. Each of these microservices will be defined as a singular, AWS Lambda function which will serve a single purpose.
@@ -205,6 +220,13 @@ In this subsection, we will display and briefly explain sequence diagrams releva
 
 The subsystems of the application are divided up into single-responsibility, service-oriented architecture. This means that the backend consists of several Lambda functions and each function is responsible for only one thing. In total, at the time of this report, there are \emph{six} Lambda functions. The break down of their functionality and responsibilities are enumerated using a brief description, followed by any additional dependencies that they may have. These dependencies include any external APIs, datastores, or databases. Functions are prefixed with \texttt{ES} and suffixed with a meaningful name which explains their role.
 
+\subsubsection{Lambda Function - ESPollLocation}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to back the location polling feature. The mobile client will run a thread. The thread will sleep until the desired time interval for each notification has passed. When the thread wakes up, it will make a request to this function using the API Gateway endpoint (something like api.emergenseek.com/poll). The request will contain the user's ID and the location of the user at the time that, the thread wakes up. The function will then pull the user from the database, update their last known location, and use Twilio to send granular location information to the user's contacts. The contact ids are stored are foreign objects within the user object that was just retrieved from the database) Note: This function will utilize the Twilio API for communication independently. It will not call the ESSendEmergencySMSMessage Lambda function.
+	\item[2.] Dependencies: DynamoDB, Twilio
+	\item[3.] HTTP Method: POST
+\end{enumerate}
+	
 \subsubsection{Lambda Function - ESUpdateContactPermissions}
 \begin{enumerate}
 	\item[1.] Function: The purpose of this Lambda function will be to update the location viewing permissions that  a user's contacts have. For simplicity, a request to this function will include a full User object and the permissions to be set or updated for their contacts.
@@ -219,11 +241,11 @@ The subsystems of the application are divided up into single-responsibility, ser
 	\item[3.] HTTP Method: POST
 \end{enumerate}
 
-\subsubsection{Lambda Function - ESGetLockscreenInfo}
+\subsubsection{Lambda Function - ESSendEmergencyVoiceCall}
 \begin{enumerate}
-	\item[1.] Function: The purpose of this Lambda function will be to retrieve lock screen information for the user in the event of an emergency. 
-	\item[2.] Dependencies: DynamoDB
-	\item[3.] HTTP Method: GET
+	\item[1.] Function: The purpose of this Lambda function will be to send EmergencyType programmable voice calls on behalf of a user using Twilio.
+	\item[2.] Dependencies: DynamoDB, Twilio
+	\item[3.] HTTP Method: POST
 \end{enumerate}
 
 \subsubsection{Lambda Function - ESCreateUser}
@@ -233,21 +255,14 @@ The subsystems of the application are divided up into single-responsibility, ser
 	\item[3.] HTTP Method: POST
 \end{enumerate}
 
-\subsubsection{Lambda Function - ESSendEmergencyVoiceCall}
+
+\subsubsection{Lambda Function - ESGetLockscreenInfo}
 \begin{enumerate}
-	\item[1.] Function: The purpose of this Lambda function will be to send EmergencyType programmable voice calls on behalf of a user using Twilio.
-	\item[2.] Dependencies: DynamoDB, Twilio
-	\item[3.] HTTP Method: POST
+	\item[1.] Function: The purpose of this Lambda function will be to retrieve lock screen information for the user in the event of an emergency. 
+	\item[2.] Dependencies: DynamoDB
+	\item[3.] HTTP Method: GET
 \end{enumerate}
 
-\subsubsection{Lambda Function - ESPollLocation}
-\begin{enumerate}
-	\item[1.] Function: The purpose of this Lambda function will be to back the location polling feature. The mobile client will run a thread. The thread will sleep until the desired time interval for each notification has passed. When the thread wakes up, it will make a request to this function using the API Gateway endpoint (something like api.emergenseek.com/poll). The request will contain the user's ID and the location of the user at the time that, the thread wakes up. The function will then pull the user from the database, update their last known location, and use Twilio to send granular location information to the user's contacts. The contact ids are stored are foreign objects within the user object that was just retrieved from the database) Note: This function will utilize the Twilio API for communication independently. It will not call the ESSendEmergencySMSMessage Lambda function.
-	\item[2.] Dependencies: DynamoDB, Twilio
-	\item[3.] HTTP Method: POST
-\end{enumerate}
-
-	
 \begin{thebibliography}{9}
 \bibitem{one}
 Cloudcraft ~ \url{https://cloudcraft.co}
