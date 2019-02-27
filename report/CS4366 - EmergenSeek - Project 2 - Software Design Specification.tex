@@ -62,8 +62,51 @@ As a reminder, EmergenSeek is a mobile application which will provide users with
 	\item[9.] View Emergency Contact: The user shall be able to view their contacts, nearby or otherwise, on a map; dependent on Google's Geocoding API for well defined location information.
 	\item[10.] View Emergency Map: The user shall be able to view a map containing emergency services available within a specified radius; dependent on Google Maps for location search results. 
 \end{enumerate}
+
 \subsection{UML Sequence Diagrams}
-% TODO: Explain Sequence Diagram
+In this subsection, we will display and briefly explain sequence diagrams relevant to our application.
+
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=0.8]{diagrams/sequence-1.png}
+  }  
+  \caption{In this sequence diagram,}
+\end{figure}
+
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=0.8]{diagrams/sequence-2.png}
+  }  
+  \caption{In this sequence diagram,}
+\end{figure}
+
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=0.8]{diagrams/sequence-2.png}
+  }  
+  \caption{In this sequence diagram,}
+\end{figure}
+
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=0.6]{diagrams/sequence-4a.png}
+  	\includegraphics[scale=0.6]{diagrams/sequence-4b.png}
+  }  
+  \caption{In these sequence diagrams,}
+\end{figure}
+
+\begin{figure}[H]
+  \centerline{
+  	\includegraphics[scale=0.6]{diagrams/sequence-5a.png}
+  	\includegraphics[scale=0.6]{diagrams/sequence-5b.png}
+  } 
+  \centerline{
+  	\includegraphics[scale=0.6]{diagrams/sequence-5c.png}
+  	\includegraphics[scale=0.6]{diagrams/sequence-5d.png}
+   } 
+  \caption{In these sequence diagrams,}
+\end{figure}
+
 \section{Client Analysis - Mockups}
 \par ~ In this section, we will enumerate some low and high fidelity mockups for the frontend.
 
@@ -85,7 +128,7 @@ As a reminder, EmergenSeek is a mobile application which will provide users with
 
 \begin{figure}[H]
   \centerline{
-  \includegraphics[width=\linewidth]{mockups.png}
+  \includegraphics[scale=0.9]{mockups.png}
   }
   \caption{Low-fidelity, mockups of the mobile client's planned service locator, location update, S.O.S. alert and S.O.S. confirmation views. Each of these views would have their own respective widgets as defined in }
 \end{figure}
@@ -97,7 +140,7 @@ As a reminder, EmergenSeek is a mobile application which will provide users with
 \begin{figure}[H]
 \begin{center}
 \centerline{
-	\includegraphics[scale=.2]{EmergenSeek-Backend.PNG}
+	\includegraphics[scale=.15]{EmergenSeek-Backend.PNG}
 }
 \caption{Cloudcraft \cite{one} diagram of the AWS resources and external APIs necessary for the backend.}
 \end{center}	
@@ -141,15 +184,45 @@ The subsystems of the application are divided up into single-responsibility, ser
 
 \subsubsection{Lambda Function - ESUpdateContactPermissions}
 \begin{enumerate}
-	\item[1.] Function: 
-	\item[2.] Dependencies: 
+	\item[1.] Function: The purpose of this Lambda function will be to update the location viewing permissions that  a user's contacts have. For simplicity, a request to this function will include a full User object and the permissions to be set or updated for their contacts.
+	\item[2.] Dependencies: DynamoDB, Firebase Auth
+	\item[3.] HTTP Method: POST
 \end{enumerate}
-\subsubsection{Lambda Function - ESSendEmergencySMSMessage }
-\subsubsection{Lambda Function - ESGetLockscreenInfo }
-\subsubsection{Lambda Function - ESCreateUser }
-\subsubsection{Lambda Function - ESSendEmergencyVoiceCall }
-\subsubsection{Lambda Function - ESPollLocation }
 
+\subsubsection{Lambda Function - ESSendEmergencySMSMessage}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to send EmergenyType SMS notifications on behalf of a user using Twilio.
+	\item[2.] Dependencies: DynamoDB, Twilio
+	\item[3.] HTTP Method: POST
+\end{enumerate}
+
+\subsubsection{Lambda Function - ESGetLockscreenInfo}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to retrieve lock screen information for the user in the event of an emergency. 
+	\item[2.] Dependencies: DynamoDB
+	\item[3.] HTTP Method: GET
+\end{enumerate}
+
+\subsubsection{Lambda Function - ESCreateUser}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to create users for the EmergenSeek application
+	\item[2.] Dependencies: DynamoDB
+	\item[3.] HTTP Method: POST
+\end{enumerate}
+
+\subsubsection{Lambda Function - ESSendEmergencyVoiceCall}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to send EmergencyType programmable voice calls on behalf of a user using Twilio.
+	\item[2.] Dependencies: DynamoDB, Twilio
+	\item[3.] HTTP Method: POST
+\end{enumerate}
+
+\subsubsection{Lambda Function - ESPollLocation}
+\begin{enumerate}
+	\item[1.] Function: The purpose of this Lambda function will be to back the location polling feature. The mobile client will run a thread. The thread will sleep until the desired time interval for each notification has passed. When the thread wakes up, it will make a request to this function using the API Gateway endpoint (something like api.emergenseek.com/poll). The request will contain the user's ID and the location of the user at the time that, the thread wakes up. The function will then pull the user from the database, update their last known location, and use Twilio to send granular location information to the user's contacts. The contact ids are stored are foreign objects within the user object that was just retrieved from the database) Note: This function will utilize the Twilio API for communication independently. It will not call the ESSendEmergencySMSMessage Lambda function.
+	\item[2.] Dependencies: DynamoDB, Twilio
+	\item[3.] HTTP Method: POST
+\end{enumerate}
 
 	
 \begin{thebibliography}{9}
